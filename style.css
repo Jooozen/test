@@ -71,6 +71,34 @@ h1 {
   background-color: #16213e;
 }
 
+.mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mode-btn {
+  padding: 8px 24px;
+  font-size: 1rem;
+  background-color: #16213e;
+  color: #e0e0e0;
+  border: 2px solid #0f3460;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.mode-btn:hover {
+  background-color: #0f3460;
+}
+
+.mode-btn.active {
+  background-color: #0f3460;
+  border-color: #4a90d9;
+  color: #ffffff;
+}
+
 #board {
   display: grid;
   grid-template-columns: repeat(8, 1fr);

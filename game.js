@@ -11,6 +11,7 @@ const DIRECTIONS = [
 let board = [];
 let currentPlayer = BLACK;
 let gameOver = false;
+let gameMode = 'ai'; // 'ai' or 'pvp'
 
 const boardEl = document.getElementById('board');
 const blackScoreEl = document.getElementById('black-score');
@@ -18,6 +19,8 @@ const whiteScoreEl = document.getElementById('white-score');
 const turnIndicatorEl = document.getElementById('turn-indicator');
 const messageEl = document.getElementById('message');
 const resetBtn = document.getElementById('reset-btn');
+const modeAIBtn = document.getElementById('mode-ai');
+const modePVPBtn = document.getElementById('mode-pvp');
 
 function initBoard() {
   board = Array.from({ length: 8 }, () => Array(8).fill(EMPTY));
@@ -231,34 +234,66 @@ function aiTurn() {
 
 function handleClick(r, c) {
   if (gameOver) return;
-  if (currentPlayer !== BLACK) return;
-  if (!canPlace(r, c, BLACK)) return;
+  if (!canPlace(r, c, currentPlayer)) return;
 
-  placePiece(r, c, BLACK);
-  currentPlayer = WHITE;
+  if (gameMode === 'ai') {
+    if (currentPlayer !== BLACK) return;
+    placePiece(r, c, BLACK);
+    currentPlayer = WHITE;
 
-  if (!hasValidMove(WHITE)) {
-    if (!checkGameEnd()) {
-      messageEl.textContent = '白は置ける場所がありません。スキップします。';
-      currentPlayer = BLACK;
-      render();
-      setTimeout(() => {
-        if (!gameOver) messageEl.textContent = '';
-      }, 2000);
-      return;
+    if (!hasValidMove(WHITE)) {
+      if (!checkGameEnd()) {
+        messageEl.textContent = '白は置ける場所がありません。スキップします。';
+        currentPlayer = BLACK;
+        render();
+        setTimeout(() => {
+          if (!gameOver) messageEl.textContent = '';
+        }, 2000);
+        return;
+      }
+    } else {
+      messageEl.textContent = '';
+    }
+
+    render();
+    checkGameEnd();
+
+    if (!gameOver && currentPlayer === WHITE) {
+      setTimeout(aiTurn, 500);
     }
   } else {
-    messageEl.textContent = '';
-  }
+    // PVPモード
+    placePiece(r, c, currentPlayer);
+    currentPlayer = opponent(currentPlayer);
 
-  render();
-  checkGameEnd();
+    if (!hasValidMove(currentPlayer)) {
+      if (!checkGameEnd()) {
+        const skippedColor = currentPlayer === BLACK ? '黒' : '白';
+        currentPlayer = opponent(currentPlayer);
+        messageEl.textContent = `${skippedColor}は置ける場所がありません。スキップします。`;
+        setTimeout(() => {
+          if (!gameOver) messageEl.textContent = '';
+        }, 2000);
+      }
+    } else {
+      messageEl.textContent = '';
+    }
 
-  // 白(AI)のターン
-  if (!gameOver && currentPlayer === WHITE) {
-    setTimeout(aiTurn, 500);
+    render();
+    checkGameEnd();
   }
 }
+
+function setMode(mode) {
+  gameMode = mode;
+  modeAIBtn.classList.toggle('active', mode === 'ai');
+  modePVPBtn.classList.toggle('active', mode === 'pvp');
+  initBoard();
+  render();
+}
+
+modeAIBtn.addEventListener('click', () => setMode('ai'));
+modePVPBtn.addEventListener('click', () => setMode('pvp'));
 
 resetBtn.addEventListener('click', () => {
   initBoard();
