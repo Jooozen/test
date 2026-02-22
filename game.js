@@ -154,21 +154,72 @@ function checkGameEnd() {
   return true;
 }
 
-function handleClick(r, c) {
-  if (gameOver) return;
-  if (!canPlace(r, c, currentPlayer)) return;
+function getAIMove() {
+  const corners = [[0,0],[0,7],[7,0],[7,7]];
+  const edges = [];
+  for (let i = 0; i < 8; i++) {
+    edges.push([0,i],[7,i],[i,0],[i,7]);
+  }
 
-  placePiece(r, c, currentPlayer);
-  currentPlayer = opponent(currentPlayer);
+  // 1. 角を最優先
+  for (const [r,c] of corners) {
+    if (canPlace(r, c, WHITE)) return [r, c];
+  }
 
-  if (!hasValidMove(currentPlayer)) {
+  // 2. 全ての有効手を取得し、最も多くひっくり返せる手を選ぶ（角の隣は避ける）
+  const badCells = new Set(['0,1','1,0','1,1','0,6','1,7','1,6','6,0','7,1','6,1','6,7','7,6','6,6']);
+  let bestMove = null;
+  let bestFlips = 0;
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const flips = getFlips(r, c, WHITE);
+      if (flips.length === 0) continue;
+      const isBad = badCells.has(`${r},${c}`);
+      const score = isBad ? flips.length * 0.5 : flips.length;
+      if (score > bestFlips) {
+        bestFlips = score;
+        bestMove = [r, c];
+      }
+    }
+  }
+
+  return bestMove;
+}
+
+function aiTurn() {
+  if (gameOver || currentPlayer !== WHITE) return;
+
+  if (!hasValidMove(WHITE)) {
     if (!checkGameEnd()) {
-      const skippedColor = currentPlayer === BLACK ? '黒' : '白';
-      currentPlayer = opponent(currentPlayer);
-      messageEl.textContent = `${skippedColor}は置ける場所がありません。スキップします。`;
+      messageEl.textContent = '白は置ける場所がありません。スキップします。';
+      currentPlayer = BLACK;
+      render();
       setTimeout(() => {
         if (!gameOver) messageEl.textContent = '';
       }, 2000);
+    }
+    return;
+  }
+
+  const move = getAIMove();
+  if (!move) return;
+
+  placePiece(move[0], move[1], WHITE);
+  currentPlayer = BLACK;
+
+  if (!hasValidMove(BLACK)) {
+    if (!checkGameEnd()) {
+      messageEl.textContent = '黒は置ける場所がありません。スキップします。';
+      currentPlayer = WHITE;
+      render();
+      setTimeout(() => {
+        if (!gameOver) {
+          messageEl.textContent = '';
+          aiTurn();
+        }
+      }, 2000);
+      return;
     }
   } else {
     messageEl.textContent = '';
@@ -176,6 +227,37 @@ function handleClick(r, c) {
 
   render();
   checkGameEnd();
+}
+
+function handleClick(r, c) {
+  if (gameOver) return;
+  if (currentPlayer !== BLACK) return;
+  if (!canPlace(r, c, BLACK)) return;
+
+  placePiece(r, c, BLACK);
+  currentPlayer = WHITE;
+
+  if (!hasValidMove(WHITE)) {
+    if (!checkGameEnd()) {
+      messageEl.textContent = '白は置ける場所がありません。スキップします。';
+      currentPlayer = BLACK;
+      render();
+      setTimeout(() => {
+        if (!gameOver) messageEl.textContent = '';
+      }, 2000);
+      return;
+    }
+  } else {
+    messageEl.textContent = '';
+  }
+
+  render();
+  checkGameEnd();
+
+  // 白(AI)のターン
+  if (!gameOver && currentPlayer === WHITE) {
+    setTimeout(aiTurn, 500);
+  }
 }
 
 resetBtn.addEventListener('click', () => {
