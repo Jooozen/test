@@ -122,11 +122,13 @@ h1 {
 }
 
 .piece.black {
-  background: radial-gradient(circle at 35% 35%, #555, #111);
+  background: radial-gradient(circle at 35% 35%, #444, #000);
+  border: 2px solid #333;
 }
 
 .piece.white {
-  background: radial-gradient(circle at 35% 35%, #fff, #ccc);
+  background: radial-gradient(circle at 35% 35%, #ffffff, #e0e0e0);
+  border: 2px solid #bbb;
 }
 
 .piece.flip {
